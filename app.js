@@ -51,6 +51,11 @@ async function addCandidate() {
     const name = document.getElementById('candidateName').value;
     const password = document.getElementById('adminPassword').value;
     
+    if (password !== "admin") {
+        alert("Password admin salah!");
+        return;
+    }
+    
     try {
         await electionContract.methods.addCandidate(name, password).send({
             from: accounts[0]
@@ -67,6 +72,11 @@ async function addCandidate() {
 async function removeCandidate() {
     const candidateId = document.getElementById('candidateId').value;
     const password = document.getElementById('adminPasswordRemove').value;
+    
+    if (password !== "admin") {
+        alert("Password admin salah!");
+        return;
+    }
     
     try {
         await electionContract.methods.removeCandidate(candidateId, password).send({
