@@ -1,7 +1,12 @@
-const contractAddress = "BUTUH SEPOLIA ETH BUAT DEPLOY TESTNET WAKKK";
-const contractABI = "./abi.json";
+const contractAddress = "0xd59586c1330CaCDeAbFc131BF8803684ACffC8de";
+let contractABI;
 let electionContract;
 let accounts;
+
+async function loadABI() {
+    const response = await fetch('./abi.json');
+    contractABI = await response.json();
+}
 
 window.addEventListener("load", async () => {
     if (window.ethereum) {
