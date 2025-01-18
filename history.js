@@ -1,4 +1,4 @@
-const contractAddress = "0xd59586c1330CaCDeAbFc131BF8803684ACffC8de";
+const contractAddress = "0x1e85e51A4681C9224814186f5EF3853AFf8A2220";
 let contractABI;
 let electionContract;
 let accounts;
@@ -13,6 +13,7 @@ window.addEventListener("load", async () => {
         window.web3 = new Web3(ethereum);
         try {
             await ethereum.enable();
+            await loadABI();
             initHistory();
         } catch (error) {
             console.error("Akses ke akun ditolak");
@@ -28,7 +29,6 @@ async function initHistory() {
     
     await Promise.all([
         loadTransactionHistory(),
-        loadVotingStatistics(),
         loadEventLogs()
     ]);
 }
@@ -48,46 +48,10 @@ async function loadTransactionHistory() {
             <p class="font-semibold">${event.event}</p>
             <p class="text-sm text-gray-600">
                 Block: ${event.blockNumber}<br>
-                TX: ${event.transactionHash.slice(0, 10)}...
+                TX: ${event.transactionHash}
             </p>
         </div>
     `).join('');
-}
-
-async function loadVotingStatistics() {
-    const statsDiv = document.getElementById("votingStats");
-    const resultsDiv = document.getElementById("candidateResults");
-    const totalVotersElement = document.getElementById("totalVoters");
-    
-    const candidatesCount = await electionContract.methods.candidatesCount().call();
-    
-    let totalVotes = 0;
-    let candidateResults = [];
-    
-    for (let i = 1; i <= candidatesCount; i++) {
-        const candidate = await electionContract.methods.candidates(i).call();
-        if (candidate.exists) {
-            totalVotes += parseInt(candidate.voteCount);
-            candidateResults.push({
-                name: candidate.name,
-                votes: candidate.voteCount
-            });
-        }
-    }
-    
-    resultsDiv.innerHTML = candidateResults.map(candidate => `
-        <div class="mb-2">
-            <p class="font-medium">${candidate.name}</p>
-            <div class="w-full bg-gray-200 rounded">
-                <div class="bg-blue-500 text-white text-xs leading-none py-1 text-center rounded" 
-                     style="width: ${(candidate.votes / totalVotes * 100).toFixed(2)}%">
-                    ${candidate.votes} votes (${(candidate.votes / totalVotes * 100).toFixed(2)}%)
-                </div>
-            </div>
-        </div>
-    `).join('');
-    
-    totalVotersElement.textContent = totalVotes;
 }
 
 async function loadEventLogs() {
@@ -98,43 +62,15 @@ async function loadEventLogs() {
         toBlock: 'latest'
     });
     
-    const addEvents = await electionContract.getPastEvents('CandidateAdded', {
-        fromBlock: 0,
-        toBlock: 'latest'
-    });
-    
-    const removeEvents = await electionContract.getPastEvents('CandidateRemoved', {
-        fromBlock: 0,
-        toBlock: 'latest'
-    });
-    
-    const allEvents = [...voteEvents, ...addEvents, ...removeEvents]
-        .sort((a, b) => b.blockNumber - a.blockNumber);
+    const allEvents = voteEvents.sort((a, b) => b.blockNumber - a.blockNumber);
     
     logsDiv.innerHTML = allEvents.map(event => {
-        let eventDescription = '';
-        switch(event.event) {
-            case 'Voted':
-                eventDescription = `Vote cast for Candidate #${event.returnValues.candidateId}`;
-                break;
-            case 'CandidateAdded':
-                eventDescription = `Candidate "${event.returnValues.name}" added with ID #${event.returnValues.candidateId}`;
-                break;
-            case 'CandidateRemoved':
-                eventDescription = `Candidate #${event.returnValues.candidateId} removed`;
-                break;
-        }
+        const eventDescription = `Pemilih ${event.transactionHash.slice(0, 15)}... memilih kandidat ${event.returnValues.candidateId}`;
         
         return `
-            <div class="border-l-4 ${event.event === 'Voted' ? 'border-green-500' : 
-                                   event.event === 'CandidateAdded' ? 'border-blue-500' : 
-                                   'border-red-500'} pl-2 mb-2">
+            <div class="border-l-4 border-green-500 pl-2 mb-2">
                 <p class="font-semibold">${event.event}</p>
-                <p>${eventDescription}</p>
-                <p class="text-sm text-gray-600">
-                    Block: ${event.blockNumber}<br>
-                    Transaction: ${event.transactionHash.slice(0, 10)}...
-                </p>
+                <p class="text-sm text-gray-600">${eventDescription}</p>
             </div>
         `;
     }).join('');

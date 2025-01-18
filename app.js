@@ -1,4 +1,4 @@
-const contractAddress = "0xd59586c1330CaCDeAbFc131BF8803684ACffC8de";
+const contractAddress = "0x1e85e51A4681C9224814186f5EF3853AFf8A2220";
 let contractABI;
 let electionContract;
 let accounts;
@@ -27,11 +27,6 @@ async function initApp() {
     accounts = await web3.eth.getAccounts();
     electionContract = new web3.eth.Contract(contractABI, contractAddress);
     renderCandidates();
-    
-    const admin = await electionContract.methods.admin().call();
-    if (accounts[0].toLowerCase() === admin.toLowerCase()) {
-        document.getElementById('adminPanel').classList.remove('hidden');
-    }
 }
 
 async function renderCandidates() {
@@ -41,59 +36,13 @@ async function renderCandidates() {
     
     for (let i = 1; i <= candidatesCount; i++) {
         const candidate = await electionContract.methods.candidates(i).call();
-        if (candidate.exists) {
-            candidatesDiv.innerHTML += `
-                <div class="p-4 bg-white rounded shadow mb-4">
-                    <h3 class="text-xl">${candidate.name}</h3>
-                    <p>Vote Count: ${candidate.voteCount}</p>
-                    <button onclick="vote(${candidate.id})" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded">Vote</button>
-                </div>
-            `;
-        }
-    }
-}
-
-async function addCandidate() {
-    const name = document.getElementById('candidateName').value;
-    const password = document.getElementById('adminPassword').value;
-    
-    if (password !== "admin") {
-        alert("Password admin salah!");
-        return;
-    }
-    
-    try {
-        await electionContract.methods.addCandidate(name, password).send({
-            from: accounts[0]
-        });
-        alert("Kandidat berhasil ditambahkan!");
-        renderCandidates();
-        document.getElementById('candidateName').value = '';
-        document.getElementById('adminPassword').value = '';
-    } catch (error) {
-        alert(error.message);
-    }
-}
-
-async function removeCandidate() {
-    const candidateId = document.getElementById('candidateId').value;
-    const password = document.getElementById('adminPasswordRemove').value;
-    
-    if (password !== "admin") {
-        alert("Password admin salah!");
-        return;
-    }
-    
-    try {
-        await electionContract.methods.removeCandidate(candidateId, password).send({
-            from: accounts[0]
-        });
-        alert("Kandidat berhasil dihapus!");
-        renderCandidates();
-        document.getElementById('candidateId').value = '';
-        document.getElementById('adminPasswordRemove').value = '';
-    } catch (error) {
-        alert(error.message);
+        candidatesDiv.innerHTML += `
+            <div class="p-4 bg-white rounded shadow mb-4">
+                <h3 class="text-xl">${candidate.name}</h3>
+                <p>Vote Count: ${candidate.voteCount}</p>
+                <button onclick="vote(${candidate.id})" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Vote</button>
+            </div>
+        `;
     }
 }
 
